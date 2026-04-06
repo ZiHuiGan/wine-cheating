@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useRef } from "react";
 
 interface Props {
@@ -83,10 +84,13 @@ export default function LabelUploader({ onAnalyze, loading }: Props) {
             onChange={handleFileChange}
           />
           {preview ? (
-            <img
+            <Image
               src={preview}
               alt="Label preview"
-              className="max-h-64 mx-auto rounded object-contain"
+              width={800}
+              height={800}
+              unoptimized
+              className="max-h-64 mx-auto rounded object-contain w-auto h-auto"
             />
           ) : (
             <div className="space-y-2">

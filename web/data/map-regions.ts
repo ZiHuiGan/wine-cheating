@@ -23,8 +23,8 @@ export type MacroRegion =
   | "inland-valleys";
 
 /**
- * Macro-region color palette matched to the official Wine Institute PDF map.
- * Used for polygon fills and markers on the Leaflet map.
+ * Macro-region palette — muted, print-like greens/teals/earth (Wine Institute wall-map family).
+ * Used for TTB-derived AVA fills + markers.
  */
 export const MACRO_REGION_CONFIG: Record<
   MacroRegion,
@@ -32,38 +32,38 @@ export const MACRO_REGION_CONFIG: Record<
 > = {
   "north-coast": {
     label: "North Coast",
-    fill: "#5c7a3e",
-    border: "#3d5229",
+    fill: "#6d8254",
+    border: "#4a5c38",
     text: "text-green-200",
   },
   "central-coast": {
     label: "Central Coast",
-    fill: "#2e7d6e",
-    border: "#1a5248",
+    fill: "#3f756c",
+    border: "#2c524b",
     text: "text-teal-200",
   },
   "sierra-foothills": {
     label: "Sierra Foothills",
-    fill: "#a0692a",
-    border: "#6b4418",
+    fill: "#9a7440",
+    border: "#6b4f2c",
     text: "text-amber-200",
   },
   "southern-california": {
     label: "Southern California",
-    fill: "#b85c2c",
-    border: "#7a3a18",
+    fill: "#a8643e",
+    border: "#6e4128",
     text: "text-orange-200",
   },
   "far-north": {
     label: "Far North",
-    fill: "#2e5c3e",
-    border: "#1a3826",
+    fill: "#4f6b4a",
+    border: "#364832",
     text: "text-green-300",
   },
   "inland-valleys": {
     label: "Inland Valleys",
-    fill: "#8a7a4a",
-    border: "#5c5030",
+    fill: "#938556",
+    border: "#63583a",
     text: "text-yellow-200",
   },
 };
@@ -1012,3 +1012,18 @@ export const STYLE_LABEL: Record<WineStyle, string> = {
   rhone: "Rhône Varieties",
   mixed: "Diverse",
 };
+
+/** Map click: full MAP_REGIONS guide vs TTB GeoJSON + optional knowledge / templates. */
+export type MapRegionSelection =
+  | { kind: "full"; region: MapRegion }
+  | {
+      kind: "geo";
+      avaId: string;
+      name: string;
+      macroRegion: MacroRegion;
+      tier: number;
+      county: string | null;
+      within: string | null;
+      created: string | null;
+      cfrIndex: string | null;
+    };
