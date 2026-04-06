@@ -14,6 +14,59 @@
 
 export type WineStyle = "cab" | "pinot" | "zin" | "rhone" | "mixed";
 export type RegionTier = "major" | "sub";
+export type MacroRegion =
+  | "north-coast"
+  | "central-coast"
+  | "sierra-foothills"
+  | "southern-california"
+  | "far-north"
+  | "inland-valleys";
+
+/**
+ * Macro-region color palette matched to the official Wine Institute PDF map.
+ * Used for polygon fills and markers on the Leaflet map.
+ */
+export const MACRO_REGION_CONFIG: Record<
+  MacroRegion,
+  { label: string; fill: string; border: string; text: string }
+> = {
+  "north-coast": {
+    label: "North Coast",
+    fill: "#5c7a3e",
+    border: "#3d5229",
+    text: "text-green-200",
+  },
+  "central-coast": {
+    label: "Central Coast",
+    fill: "#2e7d6e",
+    border: "#1a5248",
+    text: "text-teal-200",
+  },
+  "sierra-foothills": {
+    label: "Sierra Foothills",
+    fill: "#a0692a",
+    border: "#6b4418",
+    text: "text-amber-200",
+  },
+  "southern-california": {
+    label: "Southern California",
+    fill: "#b85c2c",
+    border: "#7a3a18",
+    text: "text-orange-200",
+  },
+  "far-north": {
+    label: "Far North",
+    fill: "#2e5c3e",
+    border: "#1a3826",
+    text: "text-green-300",
+  },
+  "inland-valleys": {
+    label: "Inland Valleys",
+    fill: "#8a7a4a",
+    border: "#5c5030",
+    text: "text-yellow-200",
+  },
+};
 
 export interface MapRegion {
   key: string;
@@ -22,6 +75,7 @@ export interface MapRegion {
   lng: number;
   tier: RegionTier;
   style: WineStyle;
+  macroRegion: MacroRegion;
   parentKey?: string;
 
   /** Rough polygon outline [lat, lng]. Major AVAs only — sub-AVAs use center markers. */
@@ -56,6 +110,7 @@ export const MAP_REGIONS: MapRegion[] = [
     lng: -122.42,
     tier: "major",
     style: "cab",
+    macroRegion: "north-coast",
     polygon: [
       [38.86, -122.69], [38.86, -122.40],
       [38.18, -122.20], [38.18, -122.55],
@@ -109,6 +164,7 @@ export const MAP_REGIONS: MapRegion[] = [
     lng: -122.405,
     tier: "sub",
     style: "cab",
+    macroRegion: "north-coast",
     parentKey: "napa-valley",
 
     terroirThesis: "Oakville is often called Napa's best mile because its soils and climate hit the sweet spot for Cabernet Sauvignon.",
@@ -154,6 +210,7 @@ export const MAP_REGIONS: MapRegion[] = [
     lng: -122.41,
     tier: "sub",
     style: "cab",
+    macroRegion: "north-coast",
     parentKey: "napa-valley",
 
     terroirThesis: "Rutherford is famous for a quality known as 'Rutherford Dust' — a dry, earthy, slightly savory texture that shows up on the finish of wines made here.",
@@ -199,6 +256,7 @@ export const MAP_REGIONS: MapRegion[] = [
     lng: -122.36,
     tier: "sub",
     style: "cab",
+    macroRegion: "north-coast",
     parentKey: "napa-valley",
 
     terroirThesis: "Stags Leap makes Napa's most elegant Cabernet — less powerful than hillside wines, more refined than valley floor wines.",
@@ -244,6 +302,7 @@ export const MAP_REGIONS: MapRegion[] = [
     lng: -122.47,
     tier: "sub",
     style: "cab",
+    macroRegion: "north-coast",
     parentKey: "napa-valley",
 
     terroirThesis: "Mount Veeder makes the most structured and long-lived Cabernet in Napa — wines that need years to open up but can last 30+ years.",
@@ -289,6 +348,7 @@ export const MAP_REGIONS: MapRegion[] = [
     lng: -122.49,
     tier: "sub",
     style: "cab",
+    macroRegion: "north-coast",
     parentKey: "napa-valley",
 
     terroirThesis: "Spring Mountain makes powerful, structured Cabernet from west-facing mountain slopes above the town of St. Helena.",
@@ -334,6 +394,7 @@ export const MAP_REGIONS: MapRegion[] = [
     lng: -122.38,
     tier: "sub",
     style: "cab",
+    macroRegion: "north-coast",
     parentKey: "napa-valley",
 
     terroirThesis: "Howell Mountain was the first American wine region officially recognized for being above the fog line — its wines are among the most powerful and longest-lived in Napa.",
@@ -381,6 +442,7 @@ export const MAP_REGIONS: MapRegion[] = [
     lng: -122.38,
     tier: "major",
     style: "pinot",
+    macroRegion: "north-coast",
     polygon: [
       [38.29, -122.60], [38.29, -122.25],
       [38.13, -122.25], [38.13, -122.60],
@@ -433,6 +495,7 @@ export const MAP_REGIONS: MapRegion[] = [
     lng: -122.92,
     tier: "major",
     style: "pinot",
+    macroRegion: "north-coast",
     polygon: [
       [38.64, -123.08], [38.64, -122.68],
       [38.23, -122.68], [38.23, -123.08],
@@ -485,6 +548,7 @@ export const MAP_REGIONS: MapRegion[] = [
     lng: -123.1,
     tier: "major",
     style: "pinot",
+    macroRegion: "north-coast",
     polygon: [
       [38.85, -123.55], [38.85, -122.85],
       [38.10, -122.85], [38.10, -123.55],
@@ -534,6 +598,7 @@ export const MAP_REGIONS: MapRegion[] = [
     lng: -122.89,
     tier: "major",
     style: "cab",
+    macroRegion: "north-coast",
     polygon: [
       [38.85, -123.07], [38.85, -122.77],
       [38.57, -122.77], [38.57, -123.07],
@@ -583,6 +648,7 @@ export const MAP_REGIONS: MapRegion[] = [
     lng: -122.91,
     tier: "major",
     style: "zin",
+    macroRegion: "north-coast",
     polygon: [
       [38.73, -123.04], [38.73, -122.88],
       [38.57, -122.88], [38.57, -123.04],
@@ -635,6 +701,7 @@ export const MAP_REGIONS: MapRegion[] = [
     lng: -123.5,
     tier: "major",
     style: "pinot",
+    macroRegion: "north-coast",
     polygon: [
       [39.22, -123.73], [39.22, -123.35],
       [38.87, -123.35], [38.87, -123.73],
@@ -686,6 +753,7 @@ export const MAP_REGIONS: MapRegion[] = [
     lng: -122.1,
     tier: "major",
     style: "cab",
+    macroRegion: "central-coast",
     polygon: [
       [37.58, -122.27], [37.58, -121.86],
       [36.83, -121.86], [36.83, -122.27],
@@ -735,6 +803,7 @@ export const MAP_REGIONS: MapRegion[] = [
     lng: -120.7,
     tier: "major",
     style: "rhone",
+    macroRegion: "central-coast",
     polygon: [
       [35.96, -121.08], [35.96, -120.33],
       [35.29, -120.33], [35.29, -121.08],
@@ -786,6 +855,7 @@ export const MAP_REGIONS: MapRegion[] = [
     lng: -120.22,
     tier: "major",
     style: "pinot",
+    macroRegion: "central-coast",
     polygon: [
       [34.74, -120.50], [34.74, -120.08],
       [34.50, -120.08], [34.50, -120.50],
@@ -837,6 +907,7 @@ export const MAP_REGIONS: MapRegion[] = [
     lng: -120.0,
     tier: "major",
     style: "pinot",
+    macroRegion: "central-coast",
     polygon: [
       [34.95, -120.60], [34.95, -119.45],
       [34.36, -119.45], [34.36, -120.60],
@@ -889,6 +960,7 @@ export const MAP_REGIONS: MapRegion[] = [
     lng: -120.5,
     tier: "major",
     style: "zin",
+    macroRegion: "sierra-foothills",
     polygon: [
       [39.28, -121.12], [39.28, -120.17],
       [37.85, -120.17], [37.85, -121.12],
@@ -932,40 +1004,11 @@ export const MAP_REGIONS: MapRegion[] = [
   },
 ];
 
-export const STYLE_CONFIG: Record<WineStyle, { label: string; color: string; textColor: string; markerColor: string; fillColor: string }> = {
-  cab: {
-    label: "Cabernet Country",
-    color: "bg-red-900/80",
-    textColor: "text-red-200",
-    markerColor: "#991b1b",
-    fillColor: "#991b1b",
-  },
-  pinot: {
-    label: "Pinot & Chardonnay",
-    color: "bg-rose-900/80",
-    textColor: "text-rose-200",
-    markerColor: "#9d174d",
-    fillColor: "#9d174d",
-  },
-  zin: {
-    label: "Zinfandel Heritage",
-    color: "bg-orange-900/80",
-    textColor: "text-orange-200",
-    markerColor: "#c2410c",
-    fillColor: "#c2410c",
-  },
-  rhone: {
-    label: "Rhône Varieties",
-    color: "bg-purple-900/80",
-    textColor: "text-purple-200",
-    markerColor: "#7e22ce",
-    fillColor: "#7e22ce",
-  },
-  mixed: {
-    label: "Diverse",
-    color: "bg-stone-700/80",
-    textColor: "text-stone-200",
-    markerColor: "#57534e",
-    fillColor: "#57534e",
-  },
+/** Wine style labels — used in the info panel only, not for map colors. */
+export const STYLE_LABEL: Record<WineStyle, string> = {
+  cab:   "Cabernet Country",
+  pinot: "Pinot & Chardonnay",
+  zin:   "Zinfandel Heritage",
+  rhone: "Rhône Varieties",
+  mixed: "Diverse",
 };

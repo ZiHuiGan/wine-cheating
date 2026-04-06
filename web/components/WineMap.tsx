@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { MAP_REGIONS, STYLE_CONFIG, type MapRegion } from "@/data/map-regions";
+import { MAP_REGIONS, MACRO_REGION_CONFIG, type MapRegion } from "@/data/map-regions";
 
 declare global {
   interface Window {
@@ -15,16 +15,13 @@ interface Props {
   selected: MapRegion | null;
 }
 
-function buildMarkerHtml(styleConf: { markerColor: string }, isSub: boolean, isSelected = false) {
-  const size = isSelected ? 14 : 10;
-  const bg = isSelected ? "#fbbf24" : styleConf.markerColor;
-  const border = isSelected ? "2px solid #fef3c7" : "1.5px solid rgba(255,255,255,0.5)";
-  const shadow = `0 0 0 3px ${isSelected ? "#fbbf2440" : styleConf.markerColor + "50"}`;
-  void isSub;
-  return {
-    html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${bg};border:${border};box-shadow:${shadow};cursor:pointer;"></div>`,
-    size,
-  };
+function dotHtml(fill: string, border: string, size: number, selected: boolean) {
+  const bg = selected ? "#e8b84b" : fill;
+  const bd = selected ? "#7a5a10 2px solid" : `${border} 1.5px solid`;
+  const shadow = selected
+    ? `0 0 0 3px #e8b84b55, 0 1px 4px rgba(0,0,0,0.4)`
+    : `0 1px 3px rgba(0,0,0,0.35)`;
+  return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${bg};border:${bd};box-shadow:${shadow};cursor:pointer;"></div>`;
 }
 
 export default function WineMap({ onSelect, selected }: Props) {
@@ -48,9 +45,13 @@ export default function WineMap({ onSelect, selected }: Props) {
         center: [37.5, -120.8],
         zoom: 7,
         zoomControl: true,
+        // Constrain to California area
+        maxBounds: [[31, -126], [43, -113]],
+        minZoom: 6,
       });
 
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+      // CartoDB Voyager — warm cream tones, matches the printed Wine Institute map
+      L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
         attribution:
           '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
         subdomains: "abcd",
@@ -60,17 +61,17 @@ export default function WineMap({ onSelect, selected }: Props) {
       mapRef.current = map;
 
       MAP_REGIONS.forEach((region) => {
-        const styleConf = STYLE_CONFIG[region.style];
+        const mc = MACRO_REGION_CONFIG[region.macroRegion];
         const isSub = region.tier === "sub";
 
-        // ── Draw polygon for major AVAs ──────────────────────────────────
+        // ── Polygon for major AVAs ─────────────────────────────────────
         if (region.polygon && !isSub) {
           const poly = L.polygon(region.polygon, {
-            color: styleConf.fillColor,
-            fillColor: styleConf.fillColor,
-            fillOpacity: 0.12,
+            color: mc.border,
+            fillColor: mc.fill,
+            fillOpacity: 0.18,
             weight: 1.5,
-            opacity: 0.55,
+            opacity: 0.7,
           }).addTo(map);
 
           poly.bindTooltip(region.name, {
@@ -79,31 +80,31 @@ export default function WineMap({ onSelect, selected }: Props) {
             direction: "top",
           });
 
-          poly.on("click", () => {
-            onSelect(region);
-          });
-
-          poly.on("mouseover", () => {
-            poly.setStyle({ fillOpacity: 0.22, opacity: 0.85 });
-          });
+          poly.on("click", () => onSelect(region));
+          poly.on("mouseover", () => poly.setStyle({ fillOpacity: 0.32, weight: 2 }));
           poly.on("mouseout", () => {
-            // selected state will be corrected in the selection effect
-            poly.setStyle({ fillOpacity: 0.12, opacity: 0.55 });
+            const isSelected = selected?.key === region.key;
+            poly.setStyle({ fillOpacity: isSelected ? 0.35 : 0.18, weight: isSelected ? 2.5 : 1.5 });
           });
 
           polygonsRef.current.set(region.key, poly);
         }
 
-        // ── Marker (always shown — center dot for major AVAs, only marker for sub-AVAs) ──
-        const { html, size } = buildMarkerHtml(styleConf, isSub);
-        const icon = L.divIcon({ html, className: "", iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
+        // ── Dot marker (all regions) ───────────────────────────────────
+        const size = isSub ? 8 : 12;
+        const icon = L.divIcon({
+          html: dotHtml(mc.fill, mc.border, size, false),
+          className: "",
+          iconSize: [size, size],
+          iconAnchor: [size / 2, size / 2],
+        });
 
         const marker = L.marker([region.lat, region.lng], { icon })
           .addTo(map)
           .bindTooltip(region.name, {
             permanent: false,
             direction: "top",
-            offset: [0, -12],
+            offset: [0, -10],
             className: "wine-tooltip",
           });
 
@@ -118,10 +119,7 @@ export default function WineMap({ onSelect, selected }: Props) {
       setMapReady(true);
     };
 
-    if (window.L) {
-      initMap();
-      return;
-    }
+    if (window.L) { initMap(); return; }
 
     if (!document.getElementById("leaflet-css")) {
       const link = document.createElement("link");
@@ -141,31 +139,38 @@ export default function WineMap({ onSelect, selected }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Update marker + polygon styles when selection changes
+  // Sync selection state → marker + polygon visual
   useEffect(() => {
     if (!mapReady || !window.L) return;
     const L = window.L;
 
-    // Update markers
     markersRef.current.forEach((marker, key) => {
       const region = MAP_REGIONS.find((r) => r.key === key);
       if (!region) return;
-      const styleConf = STYLE_CONFIG[region.style];
+      const mc = MACRO_REGION_CONFIG[region.macroRegion];
+      const isSub = region.tier === "sub";
       const isSelected = selected?.key === key;
-      const { html, size } = buildMarkerHtml(styleConf, region.tier === "sub", isSelected);
-      marker.setIcon(L.divIcon({ html, className: "", iconSize: [size, size], iconAnchor: [size / 2, size / 2] }));
+      const size = isSelected ? (isSub ? 12 : 18) : (isSub ? 8 : 12);
+      marker.setIcon(
+        L.divIcon({
+          html: dotHtml(mc.fill, mc.border, size, isSelected),
+          className: "",
+          iconSize: [size, size],
+          iconAnchor: [size / 2, size / 2],
+        })
+      );
     });
 
-    // Update polygons
     polygonsRef.current.forEach((poly, key) => {
       const region = MAP_REGIONS.find((r) => r.key === key);
       if (!region) return;
-      const styleConf = STYLE_CONFIG[region.style];
+      const mc = MACRO_REGION_CONFIG[region.macroRegion];
       const isSelected = selected?.key === key;
       poly.setStyle({
-        color: isSelected ? "#fbbf24" : styleConf.fillColor,
-        fillOpacity: isSelected ? 0.30 : 0.12,
-        opacity: isSelected ? 1 : 0.55,
+        color: isSelected ? "#7a5a10" : mc.border,
+        fillColor: isSelected ? "#e8b84b" : mc.fill,
+        fillOpacity: isSelected ? 0.38 : 0.18,
+        opacity: isSelected ? 1 : 0.7,
         weight: isSelected ? 2.5 : 1.5,
       });
     });
@@ -175,36 +180,37 @@ export default function WineMap({ onSelect, selected }: Props) {
     <div className="relative w-full h-full">
       <div ref={containerRef} className="w-full h-full rounded-xl overflow-hidden" />
       {!mapReady && (
-        <div className="absolute inset-0 flex items-center justify-center bg-stone-900 rounded-xl">
-          <span className="text-stone-500 text-sm animate-pulse">Loading map…</span>
+        <div className="absolute inset-0 flex items-center justify-center bg-stone-100 rounded-xl">
+          <span className="text-stone-400 text-sm animate-pulse">Loading map…</span>
         </div>
       )}
       <style>{`
         .wine-tooltip {
-          background: #1c1917;
-          border: 1px solid #44403c;
-          color: #e7e5e4;
+          background: #fffbf0;
+          border: 1px solid #c8b882;
+          color: #3a2e10;
           font-size: 12px;
           font-family: ui-sans-serif, system-ui, sans-serif;
-          padding: 3px 8px;
+          font-weight: 500;
+          padding: 3px 9px;
           border-radius: 4px;
           white-space: nowrap;
-          box-shadow: none;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.15);
         }
         .wine-tooltip::before { display: none; }
         .leaflet-attribution-flag { display: none !important; }
         .leaflet-control-attribution {
-          background: rgba(0,0,0,0.5) !important;
-          color: #57534e !important;
+          background: rgba(255,251,240,0.85) !important;
+          color: #9a8a5a !important;
           font-size: 10px !important;
         }
-        .leaflet-control-attribution a { color: #78716c !important; }
+        .leaflet-control-attribution a { color: #7a6a3a !important; }
         .leaflet-bar a {
-          background: #1c1917 !important;
-          color: #e7e5e4 !important;
-          border-color: #44403c !important;
+          background: #fffbf0 !important;
+          color: #3a2e10 !important;
+          border-color: #c8b882 !important;
         }
-        .leaflet-bar a:hover { background: #292524 !important; }
+        .leaflet-bar a:hover { background: #fdf5d8 !important; }
       `}</style>
     </div>
   );
