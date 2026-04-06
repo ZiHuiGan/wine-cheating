@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import Link from "next/link";
 import type { WineAnalysis } from "@/types/wine";
 import LabelUploader from "@/components/LabelUploader";
 import WineCard from "@/components/WineCard";
@@ -53,6 +54,12 @@ export default function Home() {
           <p className="text-stone-400 text-sm mt-1">
             California wines · Region × Producer × Vintage × Grape
           </p>
+          <Link
+            href="/map"
+            className="inline-block mt-2 text-xs text-amber-500 hover:text-amber-300 transition-colors"
+          >
+            Explore California wine regions map →
+          </Link>
         </div>
       </div>
 
